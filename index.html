@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multiple Plots on Leaflet.js</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <style>
+        #map { height: 500px; width: 100%; }
+    </style>
+</head>
+<body>
+
+    <h2>2D Plot Visualization</h2>
+    <div id="map"></div>
+
+    <script>
+        // Initialize map
+        var map = L.map('map').setView([12.9716, 77.5946], 15); // Centered at Bangalore
+
+        // Add OpenStreetMap tiles
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
+
+        // Define multiple plots using North, South, East, and West coordinates
+        var plots = [
+            {
+                north: 12.9721, south: 12.9711, east: 77.5947, west: 77.5937,
+                name: "Plot A", owner: "John Doe", dimensions: "40x30"
+            },
+            {
+                north: 12.9730, south: 12.9725, east: 77.5960, west: 77.5955,
+                name: "Plot B", owner: "Jane Smith", dimensions: "50x40"
+            },
+            {
+                north: 12.9718, south: 12.9713, east: 77.5970, west: 77.5965,
+                name: "Plot C", owner: "Alice Brown", dimensions: "30x20"
+            }
+        ];
+
+        // Function to create a GeoJSON polygon from coordinates
+        function createPlotGeoJSON(plot) {
+            return {
+                "type": "Feature",
+                "geometry": {
+                    "type": "Polygon",
+                    "coordinates": [
+                        [
+                            [plot.west, plot.north], // NW
+                            [plot.east, plot.north], // NE
+                            [plot.east, plot.south], // SE
+                            [plot.west, plot.south], // SW
+                            [plot.west, plot.north]  // Closing the polygon
+                        ]
+                    ]
+                },
+                "properties": {
+                    "name": plot.name,
+                    "owner": plot.owner,
+                    "dimensions": plot.dimensions
+                }
+            };
+        }
+
+        // Loop through plots and add them to the map
+        plots.forEach(plot => {
+            L.geoJSON(createPlotGeoJSON(plot), {
+                style: { color: "blue", weight: 2 },
+                onEachFeature: function (feature, layer) {
+                    layer.bindPopup("<b>Plot Name:</b> " + feature.properties.name +
+                                    "<br><b>Owner:</b> " + feature.properties.owner +
+                                    "<br><b>Dimensions:</b> " + feature.properties.dimensions);
+                }
+            }).addTo(map);
+        });
+
+    </script>
+
+</body>
+</html>
