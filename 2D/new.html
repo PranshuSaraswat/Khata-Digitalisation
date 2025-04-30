@@ -84,7 +84,7 @@
     text.setAttribute("x", plot.x + plot.width / 2 - 30);
     text.setAttribute("y", plot.y + plot.height / 2);
     text.setAttribute("fill", "black");
-    text.textContent = "Plot No-"+plot.plotNo;
+    text.textContent = plot.plotNo;//plot number
 
     svg.appendChild(rect);
     svg.appendChild(text);
