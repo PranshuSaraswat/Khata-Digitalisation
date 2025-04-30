@@ -1,82 +1,118 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Multiple Plots on Leaflet.js</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-    <style>
-        #map { height: 500px; width: 100%; }
-    </style>
+  <title>Login - Plot Search</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f9;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .login-container {
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      width: 300px;
+    }
+    .login-container h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    .form-group input {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    .form-group button {
+      width: 100%;
+      padding: 10px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    .form-group button:hover {
+      background-color: #0056b3;
+    }
+  </style>
 </head>
 <body>
 
-    <h2>2D Plot Visualization</h2>
-    <div id="map"></div>
+<div class="login-container">
+  <h2>Login</h2>
+  <form id="loginForm">
+    <div class="form-group">
+      <label for="longitude">Longitude:</label>
+      <input type="number" id="longitude" name="longitude" step="0.000001" placeholder="Enter longitude" required>
+    </div>
+    <div class="form-group">
+      <label for="latitude">Latitude:</label>
+      <input type="number" id="latitude" name="latitude" step="0.000001" placeholder="Enter latitude" required>
+    </div>
+    <div class="form-group">
+      <label for="directionN">Direction (North):</label>
+      <input type="number" id="directionN" name="directionN" placeholder="Enter degrees (0-360)" required>
+    </div>
+    <div class="form-group">
+      <label for="directionS">Direction (South):</label>
+      <input type="number" id="directionS" name="directionS" placeholder="Enter degrees (0-360)" required>
+    </div>
+    <div class="form-group">
+      <label for="directionE">Direction (East):</label>
+      <input type="number" id="directionE" name="directionE" placeholder="Enter degrees (0-360)" required>
+    </div>
+    <div class="form-group">
+      <label for="directionW">Direction (West):</label>
+      <input type="number" id="directionW" name="directionW" placeholder="Enter degrees (0-360)" required>
+    </div>
+    <div class="form-group">
+      <button type="button" onclick="submitLogin()">Submit</button>
+    </div>
+  </form>
+</div>
 
-    <script>
-        // Initialize map
-        var map = L.map('map').setView([12.9716, 77.5946], 15); // Centered at Bangalore
+<script>
+  function submitLogin() {
+    const longitude = document.getElementById('longitude').value;
+    const latitude = document.getElementById('latitude').value;
+    const directionN = document.getElementById('directionN').value;
+    const directionS = document.getElementById('directionS').value;
+    const directionE = document.getElementById('directionE').value;
+    const directionW = document.getElementById('directionW').value;
 
-        // Add OpenStreetMap tiles
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap'
-        }).addTo(map);
+    // Log the values (you can replace this with an API call or other logic)
+    console.log("Longitude:", longitude);
+    console.log("Latitude:", latitude);
+    console.log("North:", directionN);
+    console.log("South:", directionS);
+    console.log("East:", directionE);
+    console.log("West:", directionW);
 
-        // Define multiple plots using North, South, East, and West coordinates
-        var plots = [
-            {
-                north: 12.9721, south: 12.9711, east: 77.5947, west: 77.5937,
-                name: "Plot A", owner: "John Doe", dimensions: "40x30"
-            },
-            {
-                north: 12.9730, south: 12.9725, east: 77.5960, west: 77.5955,
-                name: "Plot B", owner: "Jane Smith", dimensions: "50x40"
-            },
-            {
-                north: 12.9718, south: 12.9713, east: 77.5970, west: 77.5965,
-                name: "Plot C", owner: "Alice Brown", dimensions: "30x20"
-            }
-        ];
-
-        // Function to create a GeoJSON polygon from coordinates
-        function createPlotGeoJSON(plot) {
-            return {
-                "type": "Feature",
-                "geometry": {
-                    "type": "Polygon",
-                    "coordinates": [
-                        [
-                            [plot.west, plot.north], // NW
-                            [plot.east, plot.north], // NE
-                            [plot.east, plot.south], // SE
-                            [plot.west, plot.south], // SW
-                            [plot.west, plot.north]  // Closing the polygon
-                        ]
-                    ]
-                },
-                "properties": {
-                    "name": plot.name,
-                    "owner": plot.owner,
-                    "dimensions": plot.dimensions
-                }
-            };
-        }
-
-        // Loop through plots and add them to the map
-        plots.forEach(plot => {
-            L.geoJSON(createPlotGeoJSON(plot), {
-                style: { color: "blue", weight: 2 },
-                onEachFeature: function (feature, layer) {
-                    layer.bindPopup("<b>Plot Name:</b> " + feature.properties.name +
-                                    "<br><b>Owner:</b> " + feature.properties.owner +
-                                    "<br><b>Dimensions:</b> " + feature.properties.dimensions);
-                }
-            }).addTo(map);
-        });
-
-    </script>
+    // Check if longitude and latitude match the condition
+    if (longitude == 20 && latitude == 10) {
+      window.location.href = "new.html"; // Redirect to new.html
+    } else {
+      alert("Invalid longitude or latitude. Please try again.");
+    }
+  }
+</script>
 
 </body>
 </html>
