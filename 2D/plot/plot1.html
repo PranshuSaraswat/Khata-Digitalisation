@@ -222,8 +222,8 @@
 
     // Road data
     const roads = [
-      { x: 0, y: 350, width: 600, height: 75 },
-      { x: 0, y: 110, width: 600, height: 50 }
+      { name:"30 feet Road",x: 0, y: 350, width: 600, height: 75 },
+      { name:"10 feet Road",x: 0, y: 110, width: 600, height: 50 }
     ];
 
     const svg = document.getElementById('plotCanvas');
@@ -241,11 +241,12 @@
       roadRect.setAttribute("stroke", "#7f8c8d");
       
       const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      text.setAttribute("name", road.name);
       text.setAttribute("x", road.x + road.width / 2);
       text.setAttribute("y", road.y + road.height / 2 + 5);
       text.setAttribute("text-anchor", "middle");
       text.setAttribute("class", "road-text");
-      text.textContent = "ROAD";
+      text.textContent = road.name;
 
       svg.appendChild(roadRect);
       svg.appendChild(text);
