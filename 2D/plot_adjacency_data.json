@@ -1,0 +1,639 @@
+{
+  "76": {
+    "plot_number": 76,
+    "adjacent": {
+      "west": 77
+    }
+  },
+  "77": {
+    "plot_number": 77,
+    "adjacent": {
+      "east": 76,
+      "west": 78
+    }
+  },
+  "78": {
+    "plot_number": 78,
+    "adjacent": {
+      "east": 77,
+      "west": 79
+    }
+  },
+  "79": {
+    "plot_number": 79,
+    "adjacent": {
+      "east": 78,
+      "west": 80
+    }
+  },
+  "80": {
+    "plot_number": 80,
+    "adjacent": {
+      "east": 79,
+      "west": 81
+    }
+  },
+  "81": {
+    "plot_number": 81,
+    "adjacent": {
+      "east": 80,
+      "west": 82
+    }
+  },
+  "82": {
+    "plot_number": 82,
+    "adjacent": {
+      "east": 81,
+      "west": 83
+    }
+  },
+  "83": {
+    "plot_number": 83,
+    "adjacent": {
+      "east": 82,
+      "west": 84
+    }
+  },
+  "84": {
+    "plot_number": 84,
+    "adjacent": {
+      "east": 83,
+      "west": 85
+    }
+  },
+  "85": {
+    "plot_number": 85,
+    "adjacent": {
+      "east": 84,
+      "west": 86
+    }
+  },
+  "86": {
+    "plot_number": 86,
+    "adjacent": {
+      "east": 85,
+      "west": 87
+    }
+  },
+  "87": {
+    "plot_number": 87,
+    "adjacent": {
+      "east": 86,
+      "west": 88
+    }
+  },
+  "88": {
+    "plot_number": 88,
+    "adjacent": {
+      "east": 87
+    }
+  },
+  "10": {
+    "plot_number": 10,
+    "adjacent": {
+      "north": 1
+    }
+  },
+  "39": {
+    "plot_number": 39,
+    "adjacent": {
+      "north": 38
+    }
+  },
+  "38": {
+    "plot_number": 38,
+    "adjacent": {
+      "south": 39,
+      "north": 37
+    }
+  },
+  "1": {
+    "plot_number": 1,
+    "adjacent": {
+      "south": 10,
+      "north": 2
+    }
+  },
+  "37": {
+    "plot_number": 37,
+    "adjacent": {
+      "south": 38,
+      "north": 36
+    }
+  },
+  "36": {
+    "plot_number": 36,
+    "adjacent": {
+      "south": 37,
+      "north": 35
+    }
+  },
+  "2": {
+    "plot_number": 2,
+    "adjacent": {
+      "south": 1,
+      "north": 3
+    }
+  },
+  "35": {
+    "plot_number": 35,
+    "adjacent": {
+      "south": 36,
+      "north": 34
+    }
+  },
+  "3": {
+    "plot_number": 3,
+    "adjacent": {
+      "south": 2,
+      "north": 4
+    }
+  },
+  "28": {
+    "plot_number": 28,
+    "adjacent": {
+      "west": 29,
+      "north": 27
+    }
+  },
+  "29": {
+    "plot_number": 29,
+    "adjacent": {
+      "east": 28,
+      "north": 30
+    }
+  },
+  "4": {
+    "plot_number": 4,
+    "adjacent": {
+      "south": 3,
+      "north": 5
+    }
+  },
+  "27": {
+    "plot_number": 27,
+    "adjacent": {
+      "south": 28,
+      "west": 30,
+      "north": 26
+    }
+  },
+  "30": {
+    "plot_number": 30,
+    "adjacent": {
+      "south": 29,
+      "east": 27,
+      "north": 26
+    }
+  },
+  "31": {
+    "plot_number": 31,
+    "adjacent": {
+      "west": 34,
+      "north": 32
+    }
+  },
+  "34": {
+    "plot_number": 34,
+    "adjacent": {
+      "south": 35,
+      "east": 31,
+      "north": 33
+    }
+  },
+  "5": {
+    "plot_number": 5,
+    "adjacent": {
+      "south": 4,
+      "north": 6
+    }
+  },
+  "6": {
+    "plot_number": 6,
+    "adjacent": {
+      "south": 5,
+      "north": 7
+    }
+  },
+  "26": {
+    "plot_number": 26,
+    "adjacent": {
+      "south": 30
+    }
+  },
+  "32": {
+    "plot_number": 32,
+    "adjacent": {
+      "south": 31,
+      "west": 33
+    }
+  },
+  "33": {
+    "plot_number": 33,
+    "adjacent": {
+      "south": 34,
+      "east": 32
+    }
+  },
+  "7": {
+    "plot_number": 7,
+    "adjacent": {
+      "south": 6,
+      "north": 8
+    }
+  },
+  "8": {
+    "plot_number": 8,
+    "adjacent": {
+      "south": 7,
+      "north": 9
+    }
+  },
+  "25": {
+    "plot_number": 25,
+    "adjacent": {
+      "west": 24
+    }
+  },
+  "24": {
+    "plot_number": 24,
+    "adjacent": {
+      "east": 25,
+      "west": 23
+    }
+  },
+  "23": {
+    "plot_number": 23,
+    "adjacent": {
+      "east": 24,
+      "west": 22
+    }
+  },
+  "22": {
+    "plot_number": 22,
+    "adjacent": {
+      "east": 23,
+      "west": 21
+    }
+  },
+  "21": {
+    "plot_number": 21,
+    "adjacent": {
+      "east": 22,
+      "west": 20
+    }
+  },
+  "20": {
+    "plot_number": 20,
+    "adjacent": {
+      "east": 21
+    }
+  },
+  "19": {
+    "plot_number": 19,
+    "adjacent": {
+      "west": 18
+    }
+  },
+  "18": {
+    "plot_number": 18,
+    "adjacent": {
+      "east": 19,
+      "west": 17
+    }
+  },
+  "17": {
+    "plot_number": 17,
+    "adjacent": {
+      "east": 18,
+      "west": 16
+    }
+  },
+  "16": {
+    "plot_number": 16,
+    "adjacent": {
+      "east": 17,
+      "west": 15
+    }
+  },
+  "15": {
+    "plot_number": 15,
+    "adjacent": {
+      "east": 16,
+      "west": 14
+    }
+  },
+  "14": {
+    "plot_number": 14,
+    "adjacent": {
+      "east": 15,
+      "west": 13
+    }
+  },
+  "13": {
+    "plot_number": 13,
+    "adjacent": {
+      "east": 14,
+      "west": 12
+    }
+  },
+  "12": {
+    "plot_number": 12,
+    "adjacent": {
+      "east": 13,
+      "west": 11
+    }
+  },
+  "11": {
+    "plot_number": 11,
+    "adjacent": {
+      "east": 12
+    }
+  },
+  "75": {
+    "plot_number": 75,
+    "adjacent": {
+      "west": 74,
+      "north": 58
+    }
+  },
+  "74": {
+    "plot_number": 74,
+    "adjacent": {
+      "east": 75,
+      "west": 73,
+      "north": 59
+    }
+  },
+  "73": {
+    "plot_number": 73,
+    "adjacent": {
+      "east": 74,
+      "west": 72,
+      "north": 60
+    }
+  },
+  "72": {
+    "plot_number": 72,
+    "adjacent": {
+      "east": 73,
+      "west": 71,
+      "north": 61
+    }
+  },
+  "71": {
+    "plot_number": 71,
+    "adjacent": {
+      "east": 72,
+      "west": 70,
+      "north": 62
+    }
+  },
+  "70": {
+    "plot_number": 70,
+    "adjacent": {
+      "east": 71,
+      "west": 69,
+      "north": 63
+    }
+  },
+  "69": {
+    "plot_number": 69,
+    "adjacent": {
+      "east": 70,
+      "west": 68,
+      "north": 64
+    }
+  },
+  "68": {
+    "plot_number": 68,
+    "adjacent": {
+      "east": 69,
+      "west": 67,
+      "north": 65
+    }
+  },
+  "67": {
+    "plot_number": 67,
+    "adjacent": {
+      "east": 68,
+      "north": 66
+    }
+  },
+  "58": {
+    "plot_number": 58,
+    "adjacent": {
+      "south": 75,
+      "west": 59
+    }
+  },
+  "59": {
+    "plot_number": 59,
+    "adjacent": {
+      "south": 74,
+      "east": 58,
+      "west": 60
+    }
+  },
+  "60": {
+    "plot_number": 60,
+    "adjacent": {
+      "south": 73,
+      "east": 59,
+      "west": 61
+    }
+  },
+  "61": {
+    "plot_number": 61,
+    "adjacent": {
+      "south": 72,
+      "east": 60,
+      "west": 62
+    }
+  },
+  "62": {
+    "plot_number": 62,
+    "adjacent": {
+      "south": 71,
+      "east": 61,
+      "west": 63
+    }
+  },
+  "63": {
+    "plot_number": 63,
+    "adjacent": {
+      "south": 70,
+      "east": 62,
+      "west": 64
+    }
+  },
+  "64": {
+    "plot_number": 64,
+    "adjacent": {
+      "south": 69,
+      "east": 63,
+      "west": 65
+    }
+  },
+  "65": {
+    "plot_number": 65,
+    "adjacent": {
+      "south": 68,
+      "east": 64,
+      "west": 66
+    }
+  },
+  "66": {
+    "plot_number": 66,
+    "adjacent": {
+      "south": 67,
+      "east": 65
+    }
+  },
+  "57": {
+    "plot_number": 57,
+    "adjacent": {
+      "west": 56,
+      "north": 40
+    }
+  },
+  "56": {
+    "plot_number": 56,
+    "adjacent": {
+      "east": 57,
+      "west": 55,
+      "north": 41
+    }
+  },
+  "55": {
+    "plot_number": 55,
+    "adjacent": {
+      "east": 56,
+      "west": 54,
+      "north": 42
+    }
+  },
+  "54": {
+    "plot_number": 54,
+    "adjacent": {
+      "east": 55,
+      "west": 53,
+      "north": 43
+    }
+  },
+  "53": {
+    "plot_number": 53,
+    "adjacent": {
+      "east": 54,
+      "west": 52,
+      "north": 44
+    }
+  },
+  "52": {
+    "plot_number": 52,
+    "adjacent": {
+      "east": 53,
+      "west": 51,
+      "north": 45
+    }
+  },
+  "51": {
+    "plot_number": 51,
+    "adjacent": {
+      "east": 52,
+      "west": 50,
+      "north": 46
+    }
+  },
+  "50": {
+    "plot_number": 50,
+    "adjacent": {
+      "east": 51,
+      "west": 49,
+      "north": 47
+    }
+  },
+  "49": {
+    "plot_number": 49,
+    "adjacent": {
+      "east": 50,
+      "north": 48
+    }
+  },
+  "40": {
+    "plot_number": 40,
+    "adjacent": {
+      "south": 57,
+      "west": 41
+    }
+  },
+  "41": {
+    "plot_number": 41,
+    "adjacent": {
+      "south": 56,
+      "east": 40,
+      "west": 42
+    }
+  },
+  "42": {
+    "plot_number": 42,
+    "adjacent": {
+      "south": 55,
+      "east": 41,
+      "west": 43
+    }
+  },
+  "43": {
+    "plot_number": 43,
+    "adjacent": {
+      "south": 54,
+      "east": 42,
+      "west": 44
+    }
+  },
+  "44": {
+    "plot_number": 44,
+    "adjacent": {
+      "south": 53,
+      "east": 43,
+      "west": 45
+    }
+  },
+  "45": {
+    "plot_number": 45,
+    "adjacent": {
+      "south": 52,
+      "east": 44,
+      "west": 46
+    }
+  },
+  "46": {
+    "plot_number": 46,
+    "adjacent": {
+      "south": 51,
+      "east": 45,
+      "west": 47
+    }
+  },
+  "47": {
+    "plot_number": 47,
+    "adjacent": {
+      "south": 50,
+      "east": 46,
+      "west": 48
+    }
+  },
+  "48": {
+    "plot_number": 48,
+    "adjacent": {
+      "south": 49,
+      "east": 47
+    }
+  },
+  "9": {
+    "plot_number": 9,
+    "adjacent": {
+      "south": 8
+    }
+  }
+}
