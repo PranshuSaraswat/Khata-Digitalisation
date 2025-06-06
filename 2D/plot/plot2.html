@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interactive Plot Layout</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f5f5f5;
+      color: #333;
+    }
+    
+    .container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    .canvas-container {
+      flex: 1;
+      min-width: 600px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      padding: 15px;
+    }
+    
+    #plotCanvas {
+      width: 100%;
+      height: 600px;
+      border: none;
+      background-color: #fafafa;
+      border-radius: 4px;
+    }
+    
+    .info-panel {
+      flex: 0 0 300px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    
+    #sidebar {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+    }
+    
+    #sidebar h3 {
+      margin-top: 0;
+      color: #2c3e50;
+      border-bottom: 2px solid #3498db;
+      padding-bottom: 8px;
+    }
+    
+    #info {
+      line-height: 1.6;
+    }
+    
+    .search-container {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+    }
+    
+    .search-container h3 {
+      margin-top: 0;
+      color: #2c3e50;
+      border-bottom: 2px solid #3498db;
+      padding-bottom: 8px;
+    }
+    
+    .search-fields {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+    
+    .search-field {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .search-field label {
+      font-weight: 600;
+      margin-bottom: 5px;
+      color: #555;
+    }
+    
+    input[type="number"] {
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    
+    button {
+      background-color: #3498db;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background-color 0.2s;
+      flex: 1;
+    }
+    
+    button:hover {
+      background-color: #2980b9;
+    }
+    
+    button.reset:hover {
+      background-color: #7f8c8d;
+    }
+    
+    .plot {
+      transition: fill 0.3s ease;
+      stroke: #555;
+      stroke-width: 1px;
+    }
+    
+    .plot:hover {
+      fill: #3498db;
+      cursor: pointer;
+    }
+    
+    .plot.selected {
+      stroke: #e74c3c;
+      stroke-width: 3px;
+    }
+    
+    .plot-number {
+      font-weight: bold;
+      pointer-events: none;
+    }
+    
+    .id-number {
+      font-size: 10px;
+      pointer-events: none;
+    }
+    
+    .road {
+      fill: #222;
+    }
+    
+    .road-text {
+      font-size: 14px;
+      fill: #fff;
+      font-weight: bold;
+      pointer-events: none;
+    }
+
+    @media (max-width: 992px) {
+      .container {
+        flex-direction: column;
+      }
+      
+      .canvas-container, .info-panel {
+        width: 100%;
+        min-width: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="canvas-container">
+      <svg width="600" height="600" id="plotCanvas" viewBox="0 0 600 600">
+        <!-- Plots will be added here via JavaScript -->
+      </svg>
+    </div>
+    
+    <div class="info-panel">
+      <div id="sidebar">
+        <h3>Plot Information</h3>
+        <p id="info">Click on a plot to view details</p>
+      </div>
+      
+      <div class="search-container">
+        <h3>Search by Direction</h3>
+        <div class="search-fields">
+          <div class="search-field">
+            <label for="degN">North (°)</label>
+            <input type="number" id="degN" placeholder="N Degrees">
+          </div>
+          <div class="search-field">
+            <label for="degS">South (°)</label>
+            <input type="number" id="degS" placeholder="S Degrees">
+          </div>
+          <div class="search-field">
+            <label for="degE">East (°)</label>
+            <input type="number" id="degE" placeholder="E Degrees">
+          </div>
+          <div class="search-field">
+            <label for="degW">West (°)</label>
+            <input type="number" id="degW" placeholder="W Degrees">
+          </div>
+        </div>
+        <div style="display: flex; gap: 10px;">
+          <button onclick="searchByDegrees()">Search Plots</button>
+          <button onclick="resetSearch()" style="background-color: #95a5a6;">Reset</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Set up a grid for plots
+    const grid = {
+      rows: 4, 
+      cols: 10,
+      plotWidth: 55,
+      plotHeight: 55,
+      roadHeight: 30,
+      topMargin: 10,
+      leftMargin: 15
+    };
+    
+    // Calculate total dimensions
+    const totalWidth = grid.cols * grid.plotWidth + grid.leftMargin * 2;
+    const totalHeight = (grid.rows * grid.plotHeight) + ((grid.rows - 1) * grid.roadHeight) + grid.topMargin * 2;
+    
+    // Generate plots in a grid pattern separated by roads
+    const plots = [];
+    let plotNo = 1;
+    
+    for (let row = 0; row < grid.rows; row++) {
+      for (let col = 0; col < grid.cols; col++) {
+        const roadOffset = row * grid.roadHeight;
+        const x = col * grid.plotWidth + grid.leftMargin;
+        const y = row * grid.plotHeight + roadOffset + grid.topMargin;
+        
+        plots.push({
+          plotNo: plotNo,
+          id: plotNo + 10 * row,
+          x: x,
+          y: y,
+          width: grid.plotWidth,
+          height: grid.plotHeight,
+          facing: { 
+            N: (plotNo * 10) % 360 || 360, 
+            S: ((plotNo * 10) + 180) % 360 || 360,
+            E: ((plotNo * 10) + 90) % 360 || 360, 
+            W: ((plotNo * 10) + 270) % 360 || 360
+          }
+        });
+        
+        plotNo++;
+      }
+    }
+    
+    // Roads data
+    const roads = [];
+    for (let i = 1; i < grid.rows; i++) {
+      const roadY = i * grid.plotHeight + (i-1) * grid.roadHeight + grid.topMargin;
+      const roadName = i === 1 ? "33 Feet Road" : i === 2 ? "24 Feet Road" : "30 Feet Road";
+      
+      roads.push({
+        x: 0,
+        y: roadY,
+        width: totalWidth,
+        height: grid.roadHeight,
+        name: roadName
+      });
+    }
+
+    const svg = document.getElementById('plotCanvas');
+    const info = document.getElementById('info');
+    let selectedPlot = null;
+
+    // Draw all elements
+    function drawElements() {
+      // Draw roads first
+      roads.forEach(road => {
+        const roadRect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+        roadRect.setAttribute("x", road.x);
+        roadRect.setAttribute("y", road.y);
+        roadRect.setAttribute("width", road.width);
+        roadRect.setAttribute("height", road.height);
+        roadRect.setAttribute("class", "road");
+        
+        const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        text.setAttribute("x", road.x + road.width / 2);
+        text.setAttribute("y", road.y + road.height / 2 + 5);
+        text.setAttribute("text-anchor", "middle");
+        text.setAttribute("class", "road-text");
+        text.textContent = road.name;
+
+        svg.appendChild(roadRect);
+        svg.appendChild(text);
+      });
+
+      // Draw plots
+      plots.forEach(plot => {
+        const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+        rect.setAttribute("x", plot.x);
+        rect.setAttribute("y", plot.y);
+        rect.setAttribute("width", plot.width);
+        rect.setAttribute("height", plot.height);
+        rect.setAttribute("fill", "#fff");
+        rect.setAttribute("data-plot-no", plot.plotNo);
+        rect.classList.add("plot");
+
+        rect.addEventListener("click", () => {
+          // Remove previous selection
+          if (selectedPlot) {
+            selectedPlot.classList.remove("selected");
+          }
+          
+          // Select this plot
+          rect.classList.add("selected");
+          selectedPlot = rect;
+          
+          // Update info panel
+          info.innerHTML = `
+            <strong>Plot #${plot.plotNo}</strong><br>
+            <strong>Dimensions:</strong> ${plot.width} × ${plot.height} units<br>
+            <strong>Position:</strong> (${plot.x}, ${plot.y})<br>
+            <strong>Direction Facing:</strong><br>
+            • North: ${plot.facing.N}°<br>
+            • South: ${plot.facing.S}°<br>
+            • East: ${plot.facing.E}°<br>
+            • West: ${plot.facing.W}°
+          `;
+        });
+
+        // Plot number
+        const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        text.setAttribute("x", plot.x + plot.width / 2);
+        text.setAttribute("y", plot.y + plot.height / 2);
+        text.setAttribute("text-anchor", "middle");
+        text.setAttribute("class", "plot-number");
+        text.textContent = plot.plotNo;
+        
+          svg.appendChild(rect);
+        svg.appendChild(text);
+      });
+    }
+
+    // Function to search plots by degrees
+    function searchByDegrees() {
+      const degN = document.getElementById('degN').value;
+      const degS = document.getElementById('degS').value;
+      const degE = document.getElementById('degE').value;
+      const degW = document.getElementById('degW').value;
+
+      // Reset all plots to original color
+      svg.querySelectorAll('.plot').forEach(rect => {
+        rect.setAttribute("fill", "#fff");
+      });
+
+      // Only proceed with highlighting if at least one field has a valid value
+      if (degN || degS || degE || degW) {
+        let foundMatch = false;
+        
+        // Highlight matching plots
+        plots.forEach((plot) => {
+          const facing = plot.facing;
+          const match =
+            (!degN || facing.N == degN) &&
+            (!degS || facing.S == degS) &&
+            (!degE || facing.E == degE) &&
+            (!degW || facing.W == degW);
+
+          if (match) {
+            foundMatch = true;
+            const rect = svg.querySelector(`.plot[data-plot-no="${plot.plotNo}"]`);
+            rect.setAttribute("fill", "#3498db");
+          }
+        });
+        
+        // Provide feedback if no matches were found
+        if (!foundMatch && (degN || degS || degE || degW)) {
+          info.innerHTML = `<div style="color: #e74c3c;">No plots match the specified criteria.</div>
+                           <div style="margin-top: 10px;">Try different values or clear fields to reset.</div>`;
+        }
+      }
+    }
+
+    // Function to extract query parameters from the URL
+    function getQueryParams() {
+      const params = new URLSearchParams(window.location.search);
+      return {
+        N: params.get('N') || '',
+        S: params.get('S') || '',
+        E: params.get('E') || '',
+        W: params.get('W') || ''
+      };
+    }
+
+    // Pre-fill the input fields with the extracted values
+    function prefillInputs() {
+      const { N, S, E, W } = getQueryParams();
+      document.getElementById('degN').value = N;
+      document.getElementById('degS').value = S;
+      document.getElementById('degE').value = E;
+      document.getElementById('degW').value = W;
+      
+      // If any parameters were provided, perform search automatically
+      if (N || S || E || W) {
+        searchByDegrees();
+      }
+    }
+
+    // Function to reset the search form and restore plot colors
+    function resetSearch() {
+      // Clear all input fields
+      document.getElementById('degN').value = '';
+      document.getElementById('degS').value = '';
+      document.getElementById('degE').value = '';
+      document.getElementById('degW').value = '';
+      
+      // Reset all plots to original color
+      svg.querySelectorAll('.plot').forEach(rect => {
+        rect.setAttribute("fill", "#fff");
+      });
+      
+      // Reset the info panel if it was showing search results
+      if (info.innerHTML.includes('No plots match')) {
+        info.innerHTML = 'Click on a plot to view details';
+      }
+    }
+    
+    // Call drawing function and prefill inputs on page load
+    window.onload = function() {
+      drawElements();
+      prefillInputs();
+    };
+  </script>
+</body>
+</html>
