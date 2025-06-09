@@ -15,7 +15,21 @@
 </head>
 <body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
   <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-8">
-    <h2 class="text-2xl font-semibold text-center mb-6 text-gray-800">Login</h2>
+    <h2 class="text-2xl font-semibold text-center mb-6 text-gray-800">Plot Search System</h2>
+    
+    <!-- Navigation buttons -->
+    <div class="space-y-4 mb-6">
+      <button onclick="window.location.href='/analysis'" class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-200">
+        <i class="fas fa-image mr-2"></i>
+        Plot Analysis Tool
+      </button>
+      <div class="text-center text-gray-500 text-sm">
+        Upload and analyze plot layout images
+      </div>
+      <hr class="my-4">
+    </div>
+
+    <h3 class="text-lg font-semibold text-center mb-4 text-gray-700">Login to View Plots</h3>
     <form id="loginForm" class="space-y-5" onsubmit="event.preventDefault(); submitLogin();">
       <div>
         <label for="longitude" class="form-label">Longitude</label>
@@ -51,7 +65,7 @@
           <input type="number" id="directionW" name="directionW" min="0" max="360" placeholder="Degrees (0-360)" class="form-input" />
         </div>
       </div>
-      <button type="submit" class="submit-button">Submit</button>
+      <button type="submit" class="submit-button">Login to Plot System</button>
     </form>
   </div>
 
@@ -72,13 +86,13 @@
       console.log("West:", directionW);
 
       if (longitude === 20 && latitude === 10) {
-        // Redirect to new.html with query parameters
+        // Redirect to plot1.html with query parameters
         const queryParams = `?N=${directionN}&S=${directionS}&E=${directionE}&W=${directionW}`;
-        window.location.href = "plot/plot1.html" + queryParams;
-      }else if (longitude === 20 && latitude === 20){
-         // Redirect to new.html with query parameters
-         const queryParams = `?N=${directionN}&S=${directionS}&E=${directionE}&W=${directionW}`;
-        window.location.href = "plot/plot2.html" + queryParams;
+        window.location.href = "/plot/plot1.html" + queryParams;
+      } else if (longitude === 20 && latitude === 20) {
+        // Redirect to plot2.html with query parameters
+        const queryParams = `?N=${directionN}&S=${directionS}&E=${directionE}&W=${directionW}`;
+        window.location.href = "/plot/plot2.html" + queryParams;
       } else {
         alert("Invalid longitude or latitude. Please try again");
       }

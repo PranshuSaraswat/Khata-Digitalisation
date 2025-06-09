@@ -23,9 +23,25 @@ def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+# Route for main login page
 @app.route('/')
 def index():
+    return send_from_directory('.', 'index.html')
+
+# Route for plot analysis tool
+@app.route('/analysis')
+def analysis():
     return send_from_directory('.', 'in.html')
+
+# Route for CSS files
+@app.route('/index.css')
+def css():
+    return send_from_directory('.', 'index.css')
+
+# Routes for plot pages
+@app.route('/plot/<filename>')
+def plot_pages(filename):
+    return send_from_directory('plot', filename)
 
 @app.route('/process-image', methods=['POST'])
 def process_image():
@@ -84,5 +100,7 @@ if __name__ == '__main__':
     print("- easyocr")
     print("- matplotlib")
     print()
-    print("Server will be available at: http://localhost:5000")
+    print("Server will be available at:")
+    print("- Main login page: http://localhost:5000")
+    print("- Plot analysis tool: http://localhost:5000/analysis")
     app.run(debug=True, host='0.0.0.0', port=5000)
