@@ -116,7 +116,7 @@ def get_direction(plot1, plot2):
         else:
             return 'north'
 
-def analyze_plots_with_ocr(image_path=r'C:\Users\Pranshu Saraswat\projects\Khata digitalization\2D\images\UseThis.png'):
+def analyze_plots_with_ocr(image_path=r'C:\Users\Pranshu Saraswat\projects\Khata digitalization\2D\images\layout.jpeg'):
     """
     Main function to detect plots, extract numbers using OCR, and analyze adjacency
     """
@@ -255,14 +255,36 @@ def analyze_plots_with_ocr(image_path=r'C:\Users\Pranshu Saraswat\projects\Khata
 # ==============
 
 # Run the combined analysis
-plot_data = analyze_plots_with_ocr()
+#plot_data = analyze_plots_with_ocr()
 
-print(f"\n🎉 Analysis complete!")
-print(f"📈 Total plots analyzed: {len(plot_data)}")
+#print(f"\n🎉 Analysis complete!")
+#print(f"📈 Total plots analyzed: {len(plot_data)}")
 
 # Example of accessing the data
-if plot_data:
+#if plot_data:
     print(f"\n📝 Example - First plot data:")
     first_plot = next(iter(plot_data.values()))
     print(f"Plot {first_plot['plot_number']}:")
     print(f"  Adjacent plots: {first_plot['adjacent']}")
+
+    # MAIN EXECUTION
+# ==============
+
+def main():
+    
+    # Run the combined analysis
+    plot_data = analyze_plots_with_ocr()
+
+    print(f"\n🎉 Analysis complete!")
+    print(f"📈 Total plots analyzed: {len(plot_data)}")
+
+    # Example of accessing the data
+    if plot_data:
+        print(f"\n📝 Example - First plot data:")
+        first_plot = next(iter(plot_data.values()))
+        print(f"Plot {first_plot['plot_number']}:")
+        print(f"  Adjacent plots: {first_plot['adjacent']}")
+
+# Only run main() when script is executed directly, not when imported
+if __name__ == "__main__":
+    main()
