@@ -282,7 +282,7 @@
                 } else {
                     for (const [direction, plotNum] of Object.entries(plot.adjacent)) {
                         const directionName = direction.charAt(0).toUpperCase() + direction.slice(1);
-                        html += `<div class="direction-info">${directionName}: Plot ${plotNum}</div>`;
+                        html += `<div class="direction-info">${directionName}: ${plotNum}</div>`;
                     }
                 }
                 

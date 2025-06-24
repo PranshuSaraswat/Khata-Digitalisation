@@ -119,6 +119,7 @@ def get_direction(plot1, plot2):
 def analyze_plots_with_ocr(image_path=r'C:\Users\Pranshu Saraswat\projects\Khata digitalization\2D\images\layout.jpeg'):
     """
     Main function to detect plots, extract numbers using OCR, and analyze adjacency
+    If no plot is adjacent in a direction, assign "Road"
     """
 
     print("🚀 Starting Combined Plot Detection and OCR Analysis...")
@@ -200,14 +201,22 @@ def analyze_plots_with_ocr(image_path=r'C:\Users\Pranshu Saraswat\projects\Khata
     print(f"✅ Successfully processed: {len(plot_info)} plots")
     print(f"❌ Failed OCR: {failed_ocr_count} plots")
 
-    # Analyze adjacency relationships
+    # Analyze adjacency relationships - assign "Road" if no adjacent plot
     print(f"\n🔗 Analyzing adjacency relationships...")
     plot_data = {}
 
     for i, plot1 in enumerate(plot_info):
         plot_number = plot1['number']
-        adjacent_plots = {}
+        
+        # Initialize all directions as "Road"
+        adjacent_plots = {
+            'north': 'Road',
+            'south': 'Road', 
+            'east': 'Road',
+            'west': 'Road'
+        }
 
+        # Check for adjacent plots and override "Road" if plot found
         for j, plot2 in enumerate(plot_info):
             if i == j:
                 continue
@@ -224,11 +233,8 @@ def analyze_plots_with_ocr(image_path=r'C:\Users\Pranshu Saraswat\projects\Khata
         }
 
         # Print adjacency info
-        if adjacent_plots:
-            adjacent_str = ", ".join([f"{direction}: {num}" for direction, num in adjacent_plots.items()])
-            print(f"Plot {plot_number} -> {adjacent_str}")
-        else:
-            print(f"Plot {plot_number} -> No adjacent neighbors")
+        adjacent_str = ", ".join([f"{direction}: {value}" for direction, value in adjacent_plots.items()])
+        print(f"Plot {plot_number} -> {adjacent_str}")
 
     # Display the annotated image
     plt.figure(figsize=(12, 8))
