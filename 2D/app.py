@@ -5,9 +5,8 @@ import json
 import tempfile
 from werkzeug.utils import secure_filename
 
-# Import your existing plot analysis function
-# Make sure to modify the import path to match your file structure
-from plotextractor import analyze_plots_with_ocr
+# Import the modular plot analysis core directly
+from plot_core import analyze_plots_with_ocr
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
@@ -37,6 +36,12 @@ def analysis():
 @app.route('/index.css')
 def css():
     return send_from_directory('.', 'index.css')
+
+
+# Route for the interactive plot UI script
+@app.route('/plot_ui.js')
+def plot_ui_js():
+    return send_from_directory('.', 'plot_ui.js')
 
 # Routes for plot pages
 @app.route('/plot/<filename>')

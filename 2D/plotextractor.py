@@ -8,6 +8,11 @@ import json
 import random
 
 from typing import List, Dict
+from plot_core import analyze_plots_with_ocr, main
+
+
+if __name__ == '__main__':
+    main()
 
 def extract_number_from_plot(plot_image, reader):
     """
@@ -345,3 +350,8 @@ def main():
 # Only run main() when script is executed directly, not when imported
 if __name__ == "__main__":
     main()
+
+
+# Re-export the modular implementation so imports use the new core module.
+from plot_core import analyze_plots_with_ocr as analyze_plots_with_ocr  # noqa: E402,F401
+from plot_core import main as main  # noqa: E402,F401
