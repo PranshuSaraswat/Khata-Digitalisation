@@ -32,6 +32,36 @@ def index():
 def analysis():
     return send_from_directory('.', 'in.html')
 
+
+@app.route('/svg-view')
+def svg_view():
+    return send_from_directory('.', 'svg_view.html')
+
+@app.route('/plot_adjacency_data.json')
+def adjacency_data():
+    return send_from_directory('.', 'plot_adjacency_data.json')
+
+@app.route('/api/saved-results')
+def get_saved_results():
+    results_dir = os.path.join(app.root_path, 'extracted_plots', 'results')
+    if not os.path.exists(results_dir):
+        return jsonify([])
+    
+    results = []
+    for filename in sorted(os.listdir(results_dir), reverse=True):
+        if filename.startswith('plot_adjacency_') and filename.endswith('.json'):
+            # Extract timestamp from filename (plot_adjacency_YYYYMMDD_HHMMSS.json)
+            timestamp = filename.replace('plot_adjacency_', '').replace('.json', '')
+            results.append({
+                'timestamp': timestamp,
+                'filename': filename,
+                'json_url': f'/extracted_plots/results/{filename}',
+                'svg_filename': f'extracted_plots_{timestamp}.svg',
+                'svg_url': f'/extracted_plots/results/extracted_plots_{timestamp}.svg'
+            })
+    
+    return jsonify(results)
+
 # Route for CSS files
 @app.route('/index.css')
 def css():
@@ -52,7 +82,8 @@ def plot_pages(filename):
 # Serve generated SVG and per-plot JSON files created by `plotextractor.py`
 @app.route('/extracted_plots/<path:filename>')
 def serve_extracted_file(filename):
-    return send_from_directory('extracted_plots', filename)
+    extracted_dir = os.path.join(app.root_path, 'extracted_plots')
+    return send_from_directory(extracted_dir, filename)
 
 
 @app.route('/plots/<path:filename>')
@@ -64,7 +95,8 @@ def serve_plot_json(filename):
 @app.route('/extracted_plots.svg')
 def extracted_svg():
     # Serve the generated SVG of detected plots
-    return send_from_directory('extracted_plots', 'extracted_plots.svg')
+    extracted_dir = os.path.join(app.root_path, 'extracted_plots')
+    return send_from_directory(extracted_dir, 'extracted_plots.svg')
 
 @app.route('/process-image', methods=['POST'])
 def process_image():

@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en" data-view="svg-view">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Plot Map</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            min-height: 100vh;
+            background: #f4f7fb;
+            color: #1f2937;
+        }
+
+        .page-shell {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 22px;
+            background: #ffffff;
+            border-bottom: 1px solid #e5e7eb;
+            box-shadow: 0 1px 8px rgba(0, 0, 0, 0.04);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .topbar h1 {
+            margin: 0;
+            font-size: 20px;
+        }
+
+        .topbar-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .button {
+            border: none;
+            border-radius: 8px;
+            padding: 10px 14px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .button.primary {
+            background: #2563eb;
+            color: #fff;
+        }
+
+        .button.secondary {
+            background: #e5e7eb;
+            color: #374151;
+        }
+
+        .button:hover {
+            opacity: 0.9;
+        }
+
+        .results-selector {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .results-selector label {
+            font-size: 14px;
+            font-weight: 500;
+            color: #374151;
+        }
+
+        .results-selector select {
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+            background: white;
+            cursor: pointer;
+        }
+
+        .results-selector select:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
+        }
+
+        .workspace {
+            flex: 1;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 320px;
+            gap: 16px;
+            padding: 16px;
+        }
+
+        .panel {
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+        }
+
+        .map-panel {
+            display: flex;
+            flex-direction: column;
+            min-height: 70vh;
+        }
+
+        .map-header {
+            padding: 14px 16px;
+            border-bottom: 1px solid #e5e7eb;
+            background: #f9fafb;
+            font-weight: 600;
+        }
+
+        #svgContainer {
+            flex: 1;
+            overflow: auto;
+            padding: 16px;
+            min-height: 70vh;
+            background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+        }
+
+        #svgContainer svg {
+            width: 100%;
+            height: auto;
+            max-height: none;
+            display: block;
+        }
+
+        .details-panel {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .details-header {
+            padding: 14px 16px;
+            border-bottom: 1px solid #e5e7eb;
+            background: #f9fafb;
+            font-weight: 600;
+        }
+
+        #plotInfo {
+            padding: 16px;
+            flex: 1;
+        }
+
+        .hint {
+            color: #6b7280;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .error {
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 12px;
+            border-radius: 8px;
+        }
+
+        @media (max-width: 960px) {
+            .workspace {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body data-view="svg-view">
+    <div class="page-shell">
+        <div class="topbar">
+            <h1>Interactive Plot Map</h1>
+            <div class="topbar-actions">
+                        <div class="results-selector">
+                            <label for="resultsDropdown">Results:</label>
+                            <select id="resultsDropdown" onchange="loadSelectedResult()">
+                                <option value="">Loading...</option>
+                            </select>
+                        </div>
+                <button class="button secondary" onclick="window.location.href='/analysis'">← Back to Analysis</button>
+                <button class="button primary" onclick="loadInteractiveSVG()">Reload SVG</button>
+            </div>
+        </div>
+
+        <div class="workspace">
+            <div class="panel map-panel">
+                <div class="map-header">SVG Plot View</div>
+                <div id="svgContainer">
+                    <div class="hint">Loading interactive SVG...</div>
+                </div>
+            </div>
+
+            <div class="panel details-panel">
+                <div class="details-header">Plot Details</div>
+                <div id="plotInfo">
+                    <div id="plotDetails" class="hint">Click a plot to see its dimensions and adjacency.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/plot_ui.js" defer></script>
+</body>
+</html>

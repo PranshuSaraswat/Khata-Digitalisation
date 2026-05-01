@@ -3,6 +3,7 @@ import os
 import random
 import re
 from typing import Dict, List, Optional, Tuple
+from datetime import datetime
 
 import cv2
 import easyocr
@@ -12,13 +13,17 @@ import numpy as np
 DEFAULT_IMAGE_PATH = r'C:\Users\Pranshu Saraswat\projects\Khata digitalization\2D\images\layout.jpeg'
 OUTPUT_ROOT = 'extracted_plots'
 PLOTS_DIR = os.path.join(OUTPUT_ROOT, 'plots')
+RESULTS_DIR = os.path.join(OUTPUT_ROOT, 'results')
 ANNOTATED_JSON_FILE = 'plot_adjacency_data.json'
 SVG_FILE = os.path.join(OUTPUT_ROOT, 'extracted_plots.svg')
+MEASUREMENT_PATTERN = re.compile(r'(?i)\b(\d{1,3})\s*ft\b')
+PURE_NUMBER_PATTERN = re.compile(r'^\s*(\d{1,4})\s*$')
 
 
 def ensure_output_dirs() -> None:
     os.makedirs(OUTPUT_ROOT, exist_ok=True)
     os.makedirs(PLOTS_DIR, exist_ok=True)
+    os.makedirs(RESULTS_DIR, exist_ok=True)
 
 
 def load_image(image_path: str) -> Optional[np.ndarray]:
@@ -53,11 +58,78 @@ def initialize_reader() -> easyocr.Reader:
     return reader
 
 
-def extract_number_from_plot(plot_image, reader):
-    """Extract number from a single plot using EasyOCR."""
+def rotate_image(image: np.ndarray, rotation: str) -> np.ndarray:
+    if rotation == 'cw':
+        return cv2.rotate(image, cv2.ROTATE_90_CLOCKWISE)
+    if rotation == 'ccw':
+        return cv2.rotate(image, cv2.ROTATE_90_COUNTERCLOCKWISE)
+    return image
+
+
+def normalize_text(text: str) -> str:
+    return re.sub(r'\s+', ' ', text.strip().lower())
+
+
+def extract_measurement_value(text: str) -> Optional[int]:
+    normalized = normalize_text(text)
+    match = MEASUREMENT_PATTERN.search(normalized)
+    if not match:
+        return None
     try:
-        ocr_results = reader.readtext(
-            plot_image,
+        return int(match.group(1))
+    except ValueError:
+        return None
+
+
+def extract_pure_number(text: str) -> Optional[int]:
+    normalized = normalize_text(text)
+    match = PURE_NUMBER_PATTERN.match(normalized)
+    if not match:
+        return None
+    try:
+        return int(match.group(1))
+    except ValueError:
+        return None
+
+
+def is_top_region(bbox, image_height: int) -> bool:
+    x_coords = [point[0] for point in bbox]
+    y_coords = [point[1] for point in bbox]
+    top_edge = min(y_coords)
+    bottom_edge = max(y_coords)
+    center_y = (top_edge + bottom_edge) / 2
+    return center_y <= image_height * 0.35 or top_edge <= image_height * 0.22
+
+
+def is_left_region(bbox, image_width: int) -> bool:
+    x_coords = [point[0] for point in bbox]
+    left_edge = min(x_coords)
+    right_edge = max(x_coords)
+    center_x = (left_edge + right_edge) / 2
+    return center_x <= image_width * 0.35 or left_edge <= image_width * 0.22
+
+
+def is_bottom_region(bbox, image_height: int) -> bool:
+    y_coords = [point[1] for point in bbox]
+    top_edge = min(y_coords)
+    bottom_edge = max(y_coords)
+    center_y = (top_edge + bottom_edge) / 2
+    return center_y >= image_height * 0.65 or bottom_edge >= image_height * 0.78
+
+
+def is_center_region(bbox, image_width: int, image_height: int) -> bool:
+    x_coords = [point[0] for point in bbox]
+    y_coords = [point[1] for point in bbox]
+    center_x = (min(x_coords) + max(x_coords)) / 2
+    center_y = (min(y_coords) + max(y_coords)) / 2
+    return abs(center_x - image_width / 2) <= image_width * 0.28 and abs(center_y - image_height / 2) <= image_height * 0.28
+
+
+def collect_ocr_results(image: np.ndarray, reader: easyocr.Reader, rotation: str = 'none'):
+    ocr_input = rotate_image(image, rotation)
+    try:
+        results = reader.readtext(
+            ocr_input,
             text_threshold=0.4,
             low_text=0.2,
             width_ths=0.4,
@@ -67,37 +139,88 @@ def extract_number_from_plot(plot_image, reader):
             ycenter_ths=0.7,
             add_margin=0.1,
         )
+    except Exception as exc:
+        print(f'OCR Error: {str(exc)}')
+        return []
 
-        number_candidates = []
-        for _, text, confidence in ocr_results:
-            numbers = re.findall(r'\d+', text)
-            for num_str in numbers:
-                try:
-                    number = int(num_str)
-                    adjusted_confidence = confidence
+    return [
+        {
+            'rotation': rotation,
+            'bbox': bbox,
+            'text': text,
+            'confidence': confidence,
+        }
+        for bbox, text, confidence in results
+    ]
 
-                    if len(num_str) == 2 and 10 <= number <= 90:
-                        adjusted_confidence += 0.1
-                    elif len(num_str) == 1 and 1 <= number <= 9:
-                        adjusted_confidence += 0.2
 
-                    number_candidates.append(
-                        {
-                            'number': number,
-                            'confidence': min(adjusted_confidence, 1.0),
-                            'digit_count': len(num_str),
-                        }
-                    )
-                except ValueError:
-                    continue
+def extract_plot_metadata(plot_image: np.ndarray, reader: easyocr.Reader) -> Tuple[Optional[int], Optional[int], Optional[int]]:
+    height, width = plot_image.shape[:2]
+    original_results = collect_ocr_results(plot_image, reader, rotation='none')
+    rotated_cw_results = collect_ocr_results(plot_image, reader, rotation='cw')
+    rotated_ccw_results = collect_ocr_results(plot_image, reader, rotation='ccw')
 
-        if number_candidates:
-            number_candidates.sort(key=lambda x: (x['digit_count'] == 2, x['confidence']), reverse=True)
-            return number_candidates[0]['number']
-        return None
-    except Exception as e:
-        print(f'OCR Error: {str(e)}')
-        return None
+    plot_number_candidates = []
+    north_south_candidates = []
+    east_west_candidates = []
+
+    for candidate in original_results:
+        text = candidate['text']
+        bbox = candidate['bbox']
+        confidence = candidate['confidence']
+
+        measurement_value = extract_measurement_value(text)
+        if measurement_value is not None:
+            if is_top_region(bbox, height):
+                north_south_candidates.append((measurement_value, confidence))
+            continue
+
+        pure_number = extract_pure_number(text)
+        if pure_number is not None:
+            if is_center_region(bbox, width, height):
+                plot_number_candidates.append((pure_number, confidence))
+
+    for candidate in rotated_ccw_results:
+        text = candidate['text']
+        bbox = candidate['bbox']
+        confidence = candidate['confidence']
+
+        measurement_value = extract_measurement_value(text)
+        if measurement_value is None:
+            continue
+
+        if is_bottom_region(bbox, width):
+            east_west_candidates.append((measurement_value, confidence))
+
+    for candidate in rotated_cw_results:
+        text = candidate['text']
+        bbox = candidate['bbox']
+        confidence = candidate['confidence']
+
+        measurement_value = extract_measurement_value(text)
+        if measurement_value is None:
+            continue
+
+        if is_top_region(bbox, width):
+            east_west_candidates.append((measurement_value, confidence))
+
+    def pick_best(candidates):
+        if not candidates:
+            return None
+        candidates.sort(key=lambda item: item[1], reverse=True)
+        return candidates[0][0]
+
+    plot_number = pick_best(plot_number_candidates)
+    north_south = pick_best(north_south_candidates)
+    east_west = pick_best(east_west_candidates)
+
+    return plot_number, north_south, east_west
+
+
+def extract_number_from_plot(plot_image, reader):
+    """Extract number from a single plot using EasyOCR."""
+    plot_number, _, _ = extract_plot_metadata(plot_image, reader)
+    return plot_number
 
 
 def extract_plot_candidates(
@@ -121,14 +244,29 @@ def extract_plot_candidates(
         plot_img = image[y:y + h, x:x + w]
 
         print(f'📝 Processing plot {i + 1} at position ({x}, {y})...')
-        detected_number = extract_number_from_plot(plot_img, reader)
+        detected_number, north_south, east_west = extract_plot_metadata(plot_img, reader)
         if detected_number is None:
             print(f'❌ Failed to detect number for plot at ({x}, {y})')
             failed_ocr_count += 1
             continue
 
         print(f'✅ Detected number: {detected_number}')
-        plot_info.append({'number': detected_number, 'x': x, 'y': y, 'w': w, 'h': h})
+        if north_south is not None:
+            print(f'   ↳ North-South: {north_south}')
+        if east_west is not None:
+            print(f'   ↳ East-West: {east_west}')
+
+        plot_info.append(
+            {
+                'number': detected_number,
+                'north_south': north_south,
+                'east_west': east_west,
+                'x': x,
+                'y': y,
+                'w': w,
+                'h': h,
+            }
+        )
 
     return plot_info, failed_ocr_count
 
@@ -184,7 +322,14 @@ def build_plot_data(plot_info: List[Dict[str, int]]) -> Dict[int, Dict[str, obje
                 direction = get_direction(plot1, plot2)
                 adjacent_plots[direction] = plot2['number']
 
-        plot_data[plot_number] = {'plot_number': plot_number, 'adjacent': adjacent_plots}
+        plot_data[plot_number] = {
+            'plot_number': plot_number,
+            'adjacent': adjacent_plots,
+            'dimension': {
+                'north-south': plot1.get('north_south'),
+                'east-west': plot1.get('east_west'),
+            },
+        }
         adjacent_str = ', '.join([f'{direction}: {value}' for direction, value in adjacent_plots.items()])
         print(f'Plot {plot_number} -> {adjacent_str}')
 
@@ -212,10 +357,21 @@ def display_annotated_image(image: np.ndarray, plot_info: List[Dict[str, int]]) 
         pass
 
 
-def save_plot_adjacency_json(plot_data: Dict[int, Dict[str, object]]) -> None:
+def save_plot_adjacency_json(plot_data: Dict[int, Dict[str, object]]) -> str:
+    ensure_output_dirs()
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    json_filename = f'plot_adjacency_{timestamp}.json'
+    json_filepath = os.path.join(RESULTS_DIR, json_filename)
+    
+    with open(json_filepath, 'w', encoding='utf-8') as file_handle:
+        json.dump(plot_data, file_handle, indent=2)
+    print(f'\n💾 JSON data saved to: {json_filepath}')
+    
+    # Also save to root for backward compatibility
     with open(ANNOTATED_JSON_FILE, 'w', encoding='utf-8') as file_handle:
         json.dump(plot_data, file_handle, indent=2)
-    print(f'\n💾 JSON data saved to: {ANNOTATED_JSON_FILE}')
+    
+    return timestamp
 
 
 def save_per_plot_json(plot_info: List[Dict[str, int]], plot_data: Dict[int, Dict[str, object]]) -> None:
@@ -225,7 +381,10 @@ def save_per_plot_json(plot_info: List[Dict[str, int]], plot_data: Dict[int, Dic
         per_plot = {
             'plot_number': num,
             'adjacent': plot_data.get(num, {}).get('adjacent', {}),
-            'dimensions': {'north_south': random.randint(30, 60), 'east_west': random.randint(10, 40)},
+            'dimension': {
+                'north-south': plot.get('north_south'),
+                'east-west': plot.get('east_west'),
+            },
         }
         with open(os.path.join(PLOTS_DIR, f'plot_{num}.json'), 'w', encoding='utf-8') as file_handle:
             json.dump(per_plot, file_handle, indent=2)
@@ -237,25 +396,42 @@ def save_plot_image(plot: Dict[str, int], image: np.ndarray) -> None:
     cv2.imwrite(os.path.join(OUTPUT_ROOT, f'plot_{plot["number"]}.png'), plot_img)
 
 
-def export_interactive_svg(image: np.ndarray, plot_info: List[Dict[str, int]]) -> None:
+def export_interactive_svg(image: np.ndarray, plot_info: List[Dict[str, int]], timestamp: str = '') -> None:
     height, width = image.shape[0], image.shape[1]
     svg_lines: List[str] = [
-        f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">'
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">',
+        '<style>',
+        '  .plot-area { fill: rgba(0,0,0,0); stroke: #00a000; stroke-width: 2; cursor: pointer; transition: all 0.18s ease; }',
+        '  .plot-area:hover { fill: rgba(37, 99, 235, 0.12); stroke: #2563eb; stroke-width: 3.5; filter: drop-shadow(0 0 4px rgba(37, 99, 235, 0.35)); }',
+        '  .plot-area.selected { fill: rgba(245, 158, 11, 0.14); stroke: #f59e0b; stroke-width: 4; }',
+        '  .plot-label { pointer-events: none; user-select: none; font-family: Arial, sans-serif; font-weight: 600; }',
+        '</style>',
     ]
 
     for plot in plot_info:
         num = plot['number']
         x, y, w, h = plot['x'], plot['y'], plot['w'], plot['h']
         svg_lines.append(
-            f'<rect id="plot_{num}" x="{x}" y="{y}" width="{w}" height="{h}" '
-            'style="fill:rgba(0,0,0,0);stroke:#00a000;stroke-width:2;cursor:pointer;" />'
+            f'<rect id="plot_{num}" class="plot-area" x="{x}" y="{y}" width="{w}" height="{h}" />'
         )
         text_x = x + 4
         text_y = y + min(24, h - 4)
-        svg_lines.append(f'<text x="{text_x}" y="{text_y}" font-size="16" fill="#0055aa">{num}</text>')
+        svg_lines.append(
+            f'<text class="plot-label" x="{text_x}" y="{text_y}" font-size="16" fill="#0055aa">{num}</text>'
+        )
 
     svg_lines.append('</svg>')
     ensure_output_dirs()
+    
+    # Save timestamped version
+    if timestamp:
+        svg_filename = f'extracted_plots_{timestamp}.svg'
+        svg_filepath = os.path.join(RESULTS_DIR, svg_filename)
+        with open(svg_filepath, 'w', encoding='utf-8') as file_handle:
+            file_handle.write('\n'.join(svg_lines))
+        print(f'💾 SVG saved to: {svg_filepath}')
+    
+    # Save current version for backward compatibility
     with open(SVG_FILE, 'w', encoding='utf-8') as file_handle:
         file_handle.write('\n'.join(svg_lines))
     print(f'💾 SVG saved to: {SVG_FILE}')
@@ -281,13 +457,9 @@ def analyze_plots_with_ocr(image_path: str = DEFAULT_IMAGE_PATH):
     print(f'❌ Failed OCR: {failed_ocr_count} plots')
 
     plot_data = build_plot_data(plot_info)
-    save_plot_adjacency_json(plot_data)
-    save_per_plot_json(plot_info, plot_data)
-    export_interactive_svg(image, plot_info)
+    timestamp = save_plot_adjacency_json(plot_data)
+    export_interactive_svg(image, plot_info, timestamp)
     display_annotated_image(image, plot_info)
-
-    for plot in plot_info:
-        save_plot_image(plot, image)
 
     print('\n📋 JSON OUTPUT:')
     print('=' * 60)

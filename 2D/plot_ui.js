@@ -2,20 +2,40 @@ let plotData = {};
 
 const $ = (id) => document.getElementById(id);
 
+function getElement(elementId) {
+    return $(elementId);
+}
+
+function hasElement(elementId) {
+    return Boolean($(elementId));
+}
+
 function showElement(elementId) {
-    $(elementId).classList.remove('hidden');
+    const element = getElement(elementId);
+    if (element) {
+        element.classList.remove('hidden');
+    }
 }
 
 function hideElement(elementId) {
-    $(elementId).classList.add('hidden');
+    const element = getElement(elementId);
+    if (element) {
+        element.classList.add('hidden');
+    }
 }
 
 function setPlotDetails(html) {
-    $('plotDetails').innerHTML = html;
+    const details = getElement('plotDetails');
+    if (details) {
+        details.innerHTML = html;
+    }
 }
 
 function displayError(message) {
-    $('processingSection').innerHTML = `<div class="error">${message}</div>`;
+    const processingSection = getElement('processingSection');
+    if (processingSection) {
+        processingSection.innerHTML = `<div class="error">${message}</div>`;
+    }
 }
 
 async function uploadAndProcess(file) {
@@ -40,10 +60,14 @@ async function uploadAndProcess(file) {
         hideElement('processingSection');
         showElement('searchSection');
         showElement('svgSection');
+        showElement('openSvgButton');
 
         await loadInteractiveSVG();
         showAllPlots();
-        $('svgSection').scrollIntoView({ behavior: 'smooth' });
+        const svgSection = getElement('svgSection');
+        if (svgSection) {
+            svgSection.scrollIntoView({ behavior: 'smooth' });
+        }
     } catch (error) {
         console.error('Error:', error);
         displayError('Error processing image. Please try again.');
@@ -70,6 +94,192 @@ function searchPlot() {
 
 function showAllPlots() {
     displayPlots(Object.values(plotData));
+}
+
+async function loadSavedResults() {
+    try {
+        const response = await fetch('/api/saved-results');
+        if (!response.ok) {
+            return;
+        }
+        
+        const results = await response.json();
+        if (results.length === 0) {
+            return;
+        }
+        
+        displaySavedResults(results);
+    } catch (error) {
+        console.error('Error loading saved results:', error);
+    }
+}
+
+function displaySavedResults(results) {
+    const resultsDiv = $('results');
+    
+    let html = '<h4>📁 Previously Analyzed Results</h4>';
+    html += '<div class="saved-results-list">';
+    
+    results.forEach((result) => {
+        const date = new Date(result.timestamp.replace(/(\d{4})(\d{2})(\d{2})_(\d{2})(\d{2})(\d{2})/, '$1-$2-$3T$4:$5:$6'));
+        const dateStr = date.toLocaleString();
+        
+        html += `
+            <div class="saved-result-item">
+                <div class="result-date">${dateStr}</div>
+                <button onclick="loadSavedResult('${result.json_url}', '${result.svg_url}')" class="load-result-btn">Load Result</button>
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    resultsDiv.innerHTML = html;
+}
+
+async function loadSavedResult(jsonUrl, svgUrl) {
+    try {
+        const response = await fetch(jsonUrl);
+        if (!response.ok) {
+            throw new Error('Failed to load result');
+        }
+        
+        plotData = await response.json();
+        showElement('searchSection');
+        showElement('svgSection');
+        showElement('openSvgButton');
+        
+        // Update SVG URL for the embedded viewer
+        const container = $('svgContainer');
+        if (container) {
+            const svgResponse = await fetch(svgUrl);
+            if (svgResponse.ok) {
+                const svgText = await svgResponse.text();
+                container.innerHTML = svgText;
+                attachSVGClickHandler();
+            }
+        }
+        
+        showAllPlots();
+        const svgSection = getElement('svgSection');
+        if (svgSection) {
+            svgSection.scrollIntoView({ behavior: 'smooth' });
+        }
+    } catch (error) {
+        console.error('Error loading result:', error);
+        displayError('Error loading result. Please try again.');
+    }
+}
+
+function attachSVGClickHandler() {
+    const container = $('svgContainer');
+    if (!container) {
+        return;
+    }
+    
+    if (container._plotClickHandler) {
+        container.removeEventListener('click', container._plotClickHandler);
+    }
+
+    container._plotClickHandler = (event) => {
+        const rect = event.target.closest('rect');
+        if (!rect) {
+            return;
+        }
+
+        const match = (rect.id || '').match(/plot_(\d+)/);
+        if (!match) {
+            return;
+        }
+
+        const plotNumber = match[1];
+        const data = plotData[plotNumber];
+        if (data) {
+            showPlotInfo(data);
+            highlightRect(rect.id);
+        } else {
+            setPlotDetails('No data for this plot.');
+        }
+    };
+
+    container.addEventListener('click', container._plotClickHandler);
+}
+
+async function populateResultsDropdown() {
+    const dropdown = $('resultsDropdown');
+    if (!dropdown) {
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/saved-results');
+        if (!response.ok) {
+            dropdown.innerHTML = '<option value="">Failed to load results</option>';
+            return;
+        }
+        
+        const results = await response.json();
+        
+        dropdown.innerHTML = '<option value="">-- Select a Result --</option>';
+
+        if (!Array.isArray(results) || results.length === 0) {
+            dropdown.innerHTML = '<option value="">No saved results found</option>';
+            const container = $('svgContainer');
+            if (container) {
+                container.innerHTML = '<div class="hint">No saved SVG results found yet. Process an image first.</div>';
+            }
+            return;
+        }
+
+        results.forEach((result) => {
+            const date = new Date(result.timestamp.replace(/(\d{4})(\d{2})(\d{2})_(\d{2})(\d{2})(\d{2})/, '$1-$2-$3T$4:$5:$6'));
+            const dateStr = date.toLocaleString();
+            const option = document.createElement('option');
+            option.value = JSON.stringify({ json: result.json_url, svg: result.svg_url });
+            option.textContent = dateStr;
+            dropdown.appendChild(option);
+        });
+        
+        // Set the latest result as default
+        if (results.length > 0) {
+            dropdown.value = JSON.stringify({ json: results[0].json_url, svg: results[0].svg_url });
+            await loadSelectedResult();
+        }
+    } catch (error) {
+        console.error('Error loading results dropdown:', error);
+        dropdown.innerHTML = '<option value="">Error loading results</option>';
+    }
+}
+
+async function loadSelectedResult() {
+    const dropdown = $('resultsDropdown');
+    if (!dropdown || !dropdown.value) {
+        return;
+    }
+    
+    try {
+        const urls = JSON.parse(dropdown.value);
+        const jsonResponse = await fetch(urls.json);
+        if (!jsonResponse.ok) {
+            throw new Error('Failed to load JSON');
+        }
+        
+        plotData = await jsonResponse.json();
+        
+        const svgResponse = await fetch(urls.svg);
+        if (!svgResponse.ok) {
+            throw new Error('Failed to load SVG');
+        }
+        
+        const svgText = await svgResponse.text();
+        const container = $('svgContainer');
+        container.innerHTML = svgText;
+        attachSVGClickHandler();
+        
+        setPlotDetails('<div class="hint">Click a plot to see its dimensions and adjacency.</div>');
+    } catch (error) {
+        console.error('Error loading selected result:', error);
+        setPlotDetails('Error loading result. Please try again.');
+    }
 }
 
 function displayPlots(plots) {
@@ -109,9 +319,9 @@ function displayPlots(plots) {
 function showPlotInfo(data) {
     let html = `<p><strong>Plot #${data.plot_number}</strong></p>`;
 
-    if (data.dimensions) {
-        html += `<p>North-South: ${data.dimensions.north_south}</p>`;
-        html += `<p>East-West: ${data.dimensions.east_west}</p>`;
+    if (data.dimension) {
+        html += `<p>North-South: ${data.dimension['north-south']}</p>`;
+        html += `<p>East-West: ${data.dimension['east-west']}</p>`;
     }
 
     if (data.adjacent) {
@@ -130,20 +340,26 @@ function highlightRect(id) {
         return;
     }
 
-    svg.querySelectorAll('rect').forEach((rect) => {
-        rect.setAttribute('stroke', '#00a000');
-        rect.setAttribute('stroke-width', '2');
+    svg.querySelectorAll('rect.plot-area').forEach((rect) => {
+        rect.classList.remove('selected');
     });
 
     const selectedRect = svg.getElementById(id);
     if (selectedRect) {
-        selectedRect.setAttribute('stroke', '#ff8800');
-        selectedRect.setAttribute('stroke-width', '3');
+        selectedRect.classList.add('selected');
     }
 }
 
 async function loadInteractiveSVG() {
     try {
+        // Load plot data from adjacency JSON if not already loaded
+        if (!plotData || Object.keys(plotData).length === 0) {
+            const dataResponse = await fetch('/plot_adjacency_data.json');
+            if (dataResponse.ok) {
+                plotData = await dataResponse.json();
+            }
+        }
+
         const response = await fetch('/extracted_plots/extracted_plots.svg');
         if (!response.ok) {
             return;
@@ -152,70 +368,72 @@ async function loadInteractiveSVG() {
         const svgText = await response.text();
         const container = $('svgContainer');
         container.innerHTML = svgText;
-
-        if (container._plotClickHandler) {
-            container.removeEventListener('click', container._plotClickHandler);
-        }
-
-        container._plotClickHandler = async (event) => {
-            const rect = event.target.closest('rect');
-            if (!rect) {
-                return;
-            }
-
-            const match = (rect.id || '').match(/plot_(\d+)/);
-            if (!match) {
-                return;
-            }
-
-            const plotNumber = match[1];
-            try {
-                const jsonResponse = await fetch(`/plots/plot_${plotNumber}.json`);
-                if (!jsonResponse.ok) {
-                    throw new Error('No JSON');
-                }
-
-                const data = await jsonResponse.json();
-                showPlotInfo(data);
-                highlightRect(rect.id);
-            } catch (error) {
-                console.error(error);
-                setPlotDetails('No data for this plot.');
-            }
-        };
-
-        container.addEventListener('click', container._plotClickHandler);
+        attachSVGClickHandler();
     } catch (error) {
         console.error('SVG load error', error);
     }
 }
 
+function openFullSvgPage() {
+    window.location.href = '/svg-view';
+}
+
 function wireEvents() {
-    $('fileInput').addEventListener('change', (event) => {
-        const file = event.target.files[0];
-        if (!file) {
-            return;
-        }
+    const fileInput = getElement('fileInput');
+    if (fileInput) {
+        fileInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (!file) {
+                return;
+            }
 
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            $('uploadedImage').src = e.target.result;
-            showElement('imageContainer');
-        };
-        reader.readAsDataURL(file);
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const uploadedImage = getElement('uploadedImage');
+                if (uploadedImage) {
+                    uploadedImage.src = e.target.result;
+                }
+                showElement('imageContainer');
+            };
+            reader.readAsDataURL(file);
 
-        uploadAndProcess(file);
-    });
+            uploadAndProcess(file);
+        });
+    }
 
-    $('plotSearch').addEventListener('keypress', (event) => {
-        if (event.key === 'Enter') {
-            searchPlot();
-        }
-    });
+    const plotSearch = getElement('plotSearch');
+    if (plotSearch) {
+        plotSearch.addEventListener('keypress', (event) => {
+            if (event.key === 'Enter') {
+                searchPlot();
+            }
+        });
+    }
+
+    const openSvgButton = getElement('openSvgButton');
+    if (openSvgButton) {
+        openSvgButton.addEventListener('click', openFullSvgPage);
+    }
+
+    const currentView = document.body?.dataset?.view || document.documentElement?.dataset?.view;
+
+    if (currentView === 'svg-view') {
+        populateResultsDropdown();
+    } else {
+        // Load and display saved results on analysis page
+        loadSavedResults();
+    }
 }
 
 window.searchPlot = searchPlot;
 window.showAllPlots = showAllPlots;
 window.loadInteractiveSVG = loadInteractiveSVG;
+window.openFullSvgPage = openFullSvgPage;
+window.loadSavedResults = loadSavedResults;
+window.loadSavedResult = loadSavedResult;
+window.attachSVGClickHandler = attachSVGClickHandler;
+
+window.populateResultsDropdown = populateResultsDropdown;
+window.loadSelectedResult = loadSelectedResult;
 
 window.addEventListener('DOMContentLoaded', wireEvents);

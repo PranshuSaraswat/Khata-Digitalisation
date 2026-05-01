@@ -48,6 +48,21 @@
             background-color: #0056b3;
         }
 
+        .saved-svg-button {
+            background-color: #6f42c1;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-left: 10px;
+        }
+
+        .saved-svg-button:hover {
+            background-color: #59359a;
+        }
+
         #fileInput {
             display: none;
         }
@@ -162,6 +177,9 @@
             <button class="upload-button" onclick="document.getElementById('fileInput').click()">
                 Choose Image
             </button>
+            <button class="saved-svg-button" type="button" onclick="window.location.href='/svg-view'">
+                Open Saved SVG Viewer
+            </button>
         </div>
         
         <div id="imageContainer" class="image-container hidden">
@@ -187,8 +205,11 @@
         </div>
 
         <div id="svgSection" class="search-section hidden" style="margin-top:20px;">
-            <h3>Interactive Plot Map</h3>
-            <div style="display:flex;gap:20px;align-items:flex-start;">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
+                <h3 style="margin:0;">Interactive Plot Map</h3>
+                <button id="openSvgButton" class="search-button hidden" type="button">Open Full SVG Page</button>
+            </div>
+            <div style="display:flex;gap:20px;align-items:flex-start;margin-top:16px;">
                 <div id="svgContainer" style="flex:1;overflow:auto;border:1px solid #ddd;padding:10px;background:#fff;min-height:240px;max-height:480px;"></div>
                 <div id="plotInfo" style="width:260px;min-height:120px;padding:10px;background:#fff;border:1px solid #ddd;">
                     <h4>Plot Details</h4>
