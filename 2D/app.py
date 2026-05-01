@@ -43,6 +43,24 @@ def css():
 def plot_pages(filename):
     return send_from_directory('plot', filename)
 
+
+# Serve generated SVG and per-plot JSON files created by `plotextractor.py`
+@app.route('/extracted_plots/<path:filename>')
+def serve_extracted_file(filename):
+    return send_from_directory('extracted_plots', filename)
+
+
+@app.route('/plots/<path:filename>')
+def serve_plot_json(filename):
+    plots_dir = os.path.join('extracted_plots', 'plots')
+    return send_from_directory(plots_dir, filename)
+
+
+@app.route('/extracted_plots.svg')
+def extracted_svg():
+    # Serve the generated SVG of detected plots
+    return send_from_directory('extracted_plots', 'extracted_plots.svg')
+
 @app.route('/process-image', methods=['POST'])
 def process_image():
     try:

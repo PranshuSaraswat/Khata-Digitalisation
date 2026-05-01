@@ -185,6 +185,17 @@
                 <p>Enter a plot number to search or click "Show All" to see all plots</p>
             </div>
         </div>
+
+        <div id="svgSection" class="search-section hidden" style="margin-top:20px;">
+            <h3>Interactive Plot Map</h3>
+            <div style="display:flex;gap:20px;align-items:flex-start;">
+                <div id="svgContainer" style="flex:1;overflow:auto;border:1px solid #ddd;padding:10px;background:#fff;min-height:240px;max-height:480px;"></div>
+                <div id="plotInfo" style="width:260px;min-height:120px;padding:10px;background:#fff;border:1px solid #ddd;">
+                    <h4>Plot Details</h4>
+                    <div id="plotDetails">Click a plot rectangle to see details here.</div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -229,7 +240,15 @@
                 document.getElementById('processingSection').classList.add('hidden');
                 document.getElementById('searchSection').classList.remove('hidden');
 
+                // Reveal and load interactive SVG map
+                const svgSec = document.getElementById('svgSection');
+                svgSec.classList.remove('hidden');
+                // Load SVG into the page so click handlers work
+                await loadInteractiveSVG();
+
                 showAllPlots();
+                // Scroll to SVG for quick access
+                svgSec.scrollIntoView({ behavior: 'smooth' });
 
             } catch (error) {
                 document.getElementById('processingSection').innerHTML = 
@@ -301,6 +320,72 @@
                 searchPlot();
             }
         });
+
+        // Load interactive SVG and attach handlers
+        async function loadInteractiveSVG() {
+            try {
+                const resp = await fetch('/extracted_plots.svg');
+                if (!resp.ok) return;
+                const svgText = await resp.text();
+                const container = document.getElementById('svgContainer');
+                container.innerHTML = svgText;
+
+                // Add click handler
+                container.addEventListener('click', async function(e) {
+                    const rect = e.target.closest('rect');
+                    if (!rect) return;
+                    const id = rect.id || '';
+                    // expected id: plot_123
+                    const m = id.match(/plot_(\d+)/);
+                    if (!m) return;
+                    const num = m[1];
+                    // fetch per-plot json
+                    try {
+                        const pj = await fetch(`/plots/plot_${num}.json`);
+                        if (!pj.ok) throw new Error('No JSON');
+                        const data = await pj.json();
+                        showPlotInfo(data);
+                        highlightRect(id);
+                    } catch (err) {
+                        document.getElementById('plotDetails').innerText = 'No data for this plot.';
+                    }
+                });
+
+            } catch (err) {
+                console.error('SVG load error', err);
+            }
+        }
+
+        function showPlotInfo(data) {
+            const el = document.getElementById('plotDetails');
+            let html = `<p><strong>Plot #${data.plot_number}</strong></p>`;
+            if (data.dimensions) {
+                html += `<p>North-South: ${data.dimensions.north_south}</p>`;
+                html += `<p>East-West: ${data.dimensions.east_west}</p>`;
+            }
+            if (data.adjacent) {
+                html += '<h5>Adjacent</h5>';
+                for (const [d, v] of Object.entries(data.adjacent)) {
+                    html += `<div>${d}: ${v}</div>`;
+                }
+            }
+            el.innerHTML = html;
+        }
+
+        function highlightRect(id) {
+            // clear previous
+            const svg = document.querySelector('#svgContainer svg');
+            if (!svg) return;
+            svg.querySelectorAll('rect').forEach(r => {
+                r.setAttribute('stroke', '#00a000');
+                r.setAttribute('stroke-width', '2');
+            });
+            const sel = svg.getElementById(id);
+            if (sel) {
+                sel.setAttribute('stroke', '#ff8800');
+                sel.setAttribute('stroke-width', '3');
+            }
+        }
     </script>
 </body>
 </html>
