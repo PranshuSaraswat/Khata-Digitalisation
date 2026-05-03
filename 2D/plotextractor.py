@@ -5,6 +5,14 @@ import os
 import re
 import easyocr
 import json
+import random
+
+from typing import List, Dict
+from plot_core import analyze_plots_with_ocr, main
+
+
+if __name__ == '__main__':
+    main()
 
 def extract_number_from_plot(plot_image, reader):
     """
@@ -236,12 +244,16 @@ def analyze_plots_with_ocr(image_path=r'C:\Users\Pranshu Saraswat\projects\Khata
         adjacent_str = ", ".join([f"{direction}: {value}" for direction, value in adjacent_plots.items()])
         print(f"Plot {plot_number} -> {adjacent_str}")
 
-    # Display the annotated image
-    plt.figure(figsize=(12, 8))
-    plt.title(f"Plot Detection with OCR Numbers: {len(plot_info)} plots identified")
-    plt.imshow(cv2.cvtColor(img_all_plots, cv2.COLOR_BGR2RGB))
-    plt.axis('off')
-    plt.show()
+    # Display the annotated image (optional)
+    try:
+        plt.figure(figsize=(12, 8))
+        plt.title(f"Plot Detection with OCR Numbers: {len(plot_info)} plots identified")
+        plt.imshow(cv2.cvtColor(img_all_plots, cv2.COLOR_BGR2RGB))
+        plt.axis('off')
+        plt.show()
+    except Exception:
+        # Matplotlib display may fail in headless environments; ignore
+        pass
 
     # Save JSON output
     output_file = "plot_adjacency_data.json"
@@ -250,7 +262,51 @@ def analyze_plots_with_ocr(image_path=r'C:\Users\Pranshu Saraswat\projects\Khata
 
     print(f"\n💾 JSON data saved to: {output_file}")
 
-    # Print JSON output
+    # Prepare output folders for interactive UI
+    output_dir = "extracted_plots"
+    os.makedirs(output_dir, exist_ok=True)
+    plots_dir = os.path.join(output_dir, 'plots')
+    os.makedirs(plots_dir, exist_ok=True)
+
+    # Write per-plot JSON files (with placeholder/random dimensions)
+    for p in plot_info:
+        num = p['number']
+        per_plot = {
+            'plot_number': num,
+            'adjacent': plot_data.get(num, {}).get('adjacent', {}),
+            'dimensions': {
+                'north_south': random.randint(30, 60),
+                'east_west': random.randint(10, 40)
+            }
+        }
+        with open(os.path.join(plots_dir, f'plot_{num}.json'), 'w') as pf:
+            json.dump(per_plot, pf, indent=2)
+
+    # Create a simple SVG that mirrors detected plot rectangles so front-end can interact
+    height, width = img.shape[0], img.shape[1]
+    svg_lines: List[str] = []
+    svg_lines.append(f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">')
+
+    # Add translucent background image as data URL (optional) - omitted to keep SVG small
+    for p in plot_info:
+        num = p['number']
+        x, y, w, h = p['x'], p['y'], p['w'], p['h']
+        rect = (f'<rect id="plot_{num}" x="{x}" y="{y}" width="{w}" height="{h}" '
+                f'style="fill:rgba(0,0,0,0);stroke:#00a000;stroke-width:2;cursor:pointer;" />')
+        text_x = x + 4
+        text_y = y + min(24, h - 4)
+        label = (f'<text x="{text_x}" y="{text_y}" font-size="16" fill="#0055aa">{num}</text>')
+        svg_lines.append(rect)
+        svg_lines.append(label)
+
+    svg_lines.append('</svg>')
+    svg_content = "\n".join(svg_lines)
+    svg_path = os.path.join(output_dir, 'extracted_plots.svg')
+    with open(svg_path, 'w', encoding='utf-8') as svf:
+        svf.write(svg_content)
+
+    print(f"💾 SVG saved to: {svg_path}")
+
     print(f"\n📋 JSON OUTPUT:")
     print("=" * 60)
     print(json.dumps(plot_data, indent=2))
@@ -294,3 +350,8 @@ def main():
 # Only run main() when script is executed directly, not when imported
 if __name__ == "__main__":
     main()
+
+
+# Re-export the modular implementation so imports use the new core module.
+from plot_core import analyze_plots_with_ocr as analyze_plots_with_ocr  # noqa: E402,F401
+from plot_core import main as main  # noqa: E402,F401

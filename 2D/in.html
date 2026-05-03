@@ -48,6 +48,21 @@
             background-color: #0056b3;
         }
 
+        .saved-svg-button {
+            background-color: #6f42c1;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-left: 10px;
+        }
+
+        .saved-svg-button:hover {
+            background-color: #59359a;
+        }
+
         #fileInput {
             display: none;
         }
@@ -162,6 +177,9 @@
             <button class="upload-button" onclick="document.getElementById('fileInput').click()">
                 Choose Image
             </button>
+            <button class="saved-svg-button" type="button" onclick="window.location.href='/svg-view'">
+                Open Saved SVG Viewer
+            </button>
         </div>
         
         <div id="imageContainer" class="image-container hidden">
@@ -185,122 +203,22 @@
                 <p>Enter a plot number to search or click "Show All" to see all plots</p>
             </div>
         </div>
+
+        <div id="svgSection" class="search-section hidden" style="margin-top:20px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
+                <h3 style="margin:0;">Interactive Plot Map</h3>
+                <button id="openSvgButton" class="search-button hidden" type="button">Open Full SVG Page</button>
+            </div>
+            <div style="display:flex;gap:20px;align-items:flex-start;margin-top:16px;">
+                <div id="svgContainer" style="flex:1;overflow:auto;border:1px solid #ddd;padding:10px;background:#fff;min-height:240px;max-height:480px;"></div>
+                <div id="plotInfo" style="width:260px;min-height:120px;padding:10px;background:#fff;border:1px solid #ddd;">
+                    <h4>Plot Details</h4>
+                    <div id="plotDetails">Click a plot rectangle to see details here.</div>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <script>
-        let plotData = {};
-
-        document.getElementById('fileInput').addEventListener('change', function(event) {
-            const file = event.target.files[0];
-            if (file) {
-                // Show uploaded image
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    document.getElementById('uploadedImage').src = e.target.result;
-                    document.getElementById('imageContainer').classList.remove('hidden');
-                };
-                reader.readAsDataURL(file);
-
-                // Upload and process image
-                uploadAndProcess(file);
-            }
-        });
-
-        async function uploadAndProcess(file) {
-            document.getElementById('processingSection').classList.remove('hidden');
-            document.getElementById('searchSection').classList.add('hidden');
-
-            const formData = new FormData();
-            formData.append('image', file);
-
-            try {
-                const response = await fetch('/process-image', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                if (!response.ok) {
-                    throw new Error('Processing failed');
-                }
-
-                const result = await response.json();
-                plotData = result;
-
-                document.getElementById('processingSection').classList.add('hidden');
-                document.getElementById('searchSection').classList.remove('hidden');
-
-                showAllPlots();
-
-            } catch (error) {
-                document.getElementById('processingSection').innerHTML = 
-                    '<div class="error">Error processing image. Please try again.</div>';
-                console.error('Error:', error);
-            }
-        }
-
-        function searchPlot() {
-            const plotNumber = document.getElementById('plotSearch').value;
-            const resultsDiv = document.getElementById('results');
-            
-            if (!plotNumber) {
-                resultsDiv.innerHTML = '<p>Please enter a plot number</p>';
-                return;
-            }
-            
-            const plot = plotData[plotNumber];
-            if (!plot) {
-                resultsDiv.innerHTML = '<p>Plot not found</p>';
-                return;
-            }
-            
-            displayPlots([plot]);
-        }
-
-        function showAllPlots() {
-            const plots = Object.values(plotData);
-            displayPlots(plots);
-        }
-
-        function displayPlots(plots) {
-            const resultsDiv = document.getElementById('results');
-            
-            if (plots.length === 0) {
-                resultsDiv.innerHTML = '<p>No plots found</p>';
-                return;
-            }
-            
-            let html = '';
-            plots.forEach(plot => {
-                html += `
-                    <div class="plot-result">
-                        <div class="plot-number">Plot #${plot.plot_number}</div>
-                        <div class="adjacent-plots">
-                `;
-                
-                if (Object.keys(plot.adjacent).length === 0) {
-                    html += '<div class="direction-info">No adjacent plots</div>';
-                } else {
-                    for (const [direction, plotNum] of Object.entries(plot.adjacent)) {
-                        const directionName = direction.charAt(0).toUpperCase() + direction.slice(1);
-                        html += `<div class="direction-info">${directionName}: ${plotNum}</div>`;
-                    }
-                }
-                
-                html += `
-                        </div>
-                    </div>
-                `;
-            });
-            
-            resultsDiv.innerHTML = html;
-        }
-
-        // Allow Enter key to search
-        document.getElementById('plotSearch').addEventListener('keypress', function(event) {
-            if (event.key === 'Enter') {
-                searchPlot();
-            }
-        });
-    </script>
+    <script src="/plot_ui.js" defer></script>
 </body>
 </html>
