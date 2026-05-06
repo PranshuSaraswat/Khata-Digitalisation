@@ -172,7 +172,7 @@ def extract_plot_metadata(plot_image: np.ndarray, reader: easyocr.Reader) -> Tup
         measurement_value = extract_measurement_value(text)
         if measurement_value is not None:
             if is_top_region(bbox, height):
-                north_south_candidates.append((measurement_value, confidence))
+                east_west_candidates.append((measurement_value, confidence))
             continue
 
         pure_number = extract_pure_number(text)
@@ -190,7 +190,7 @@ def extract_plot_metadata(plot_image: np.ndarray, reader: easyocr.Reader) -> Tup
             continue
 
         if is_bottom_region(bbox, width):
-            east_west_candidates.append((measurement_value, confidence))
+            north_south_candidates.append((measurement_value, confidence))
 
     for candidate in rotated_cw_results:
         text = candidate['text']
@@ -202,7 +202,7 @@ def extract_plot_metadata(plot_image: np.ndarray, reader: easyocr.Reader) -> Tup
             continue
 
         if is_top_region(bbox, width):
-            east_west_candidates.append((measurement_value, confidence))
+            north_south_candidates.append((measurement_value, confidence))
 
     def pick_best(candidates):
         if not candidates:
